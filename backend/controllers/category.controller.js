@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma/edge.js'
+import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export const getCategories = async (req, res) => {
@@ -8,13 +8,13 @@ export const getCategories = async (req, res) => {
         });
         res.json(categories);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to load categories' });
+        res.status(500).json({ error: 'Failed to load categories', error: error });
     }
 }
 
 export const createCategory = async (req, res) => {
     try {
-        const { name } = req.body.name;
+        const { name } = req.body;
         if(!name) return res.status(400).json({ message: "Name is required" });
     
         const newCategory = await prisma.category.create({

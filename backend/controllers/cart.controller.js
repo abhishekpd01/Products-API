@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma/edge.js'
+import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export const addToCart = async (req, res) => {
@@ -17,7 +17,7 @@ export const addToCart = async (req, res) => {
         });
         res.status(201).json(updatedCart);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to add to cart' });
+        res.status(500).json({ error: 'Failed to add to cart', error: error });
     }
 }
 
