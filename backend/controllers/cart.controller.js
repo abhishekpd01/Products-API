@@ -2,53 +2,54 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export const addToCart = async (req, res) => {
-    try {
-        const { userId, productId, quantity } = req.body;
-        const cart = await prisma.cart.findFirst({ where: { userId } });
-        if(!cart) {
-            cart = await prisma.cart.create({ data: { userId, items: [] } });
-        }
-    
-        const updatedCart = await prisma.cart.update({
-          where: { id: cart.id },
-          data: {
-            items: { push: { productId, quantity } }
-          }
-        });
-        res.status(201).json(updatedCart);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to add to cart', error: error });
+  try {
+    const { userId, productId, quantity } = req.body;
+
+    // Find or create cart for user
+    let cart = await prisma.cart.findFirst({ where: { userId } });
+    if (!cart) {
+      cart = await prisma.cart.create({ data: { userId } });
     }
-}
+
+    // Create cart item linked to cart
+    const cartItem = await prisma.cartItem.create({
+      data: {
+        productId,
+        quantity,
+        cartId: cart.id
+      }
+    });
+
+    res.status(201).json(cartItem);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to add to cart', details: error.message });
+  }
+};
 
 export const getCart = async (req, res) => {
-    try {
-        const { userId } = req.query;
-        const cart = await prisma.cart.findFirst({ where: { userId } });
-        if (!cart) return res.json({ items: [] });
-        res.json(cart);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to load to cart' });
-    }
-}
+  try {
+    const { userId } = req.query;
+    const cart = await prisma.cart.findFirst({
+      where: { userId },
+      include: { items: true }
+    });
+    if (!cart) return res.json({ items: [] });
+    res.json(cart);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get cart', details: error.message });
+  }
+};
+
 
 export const removeFromCart = async (req, res) => {
-    try {
-        const { userId } = req.query;
-        const { itemId } = req.params;
-    
-        const cart = await prisma.cart.findFirst({ where: { userId } });
-        if (!cart) return res.status(404).json({ message: "Cart not found" });
-    
-        const updatedItems = cart.items.filter(i => i.id !== itemId);
-    
-        const updatedCart = await prisma.cart.update({
-          where: { id: cart.id },
-          data: { items: updatedItems }
-        });
-    
-        res.json(updatedCart);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to remove from cart' });
-    }
-}
+  try {
+    const { itemId } = req.params;
+    await prisma.cartItem.delete({
+      where: { id: itemId }
+    });
+    res.json({ message: "Item removed from cart" });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove from cart', details: error.message });
+  }
+};
