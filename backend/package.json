@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon app.js",
-    "prisma": "prisma"
+    "prisma": "prisma",
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "",
